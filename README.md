@@ -3,7 +3,7 @@
 **A full‑stack laptop recommendation system combining classical IR algorithms with a lightweight Java HTTP API and a React frontend.**
 
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://adoptium.net/)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
+[![React 19](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 [![Vercel](https://img.shields.io/badge/Frontend-Vercel-black.svg)](https://vercel.com/)
 [![Railway](https://img.shields.io/badge/Backend-Railway-purple.svg)](https://railway.app/)
 
@@ -13,17 +13,22 @@
 
 RecommendoBot lets users search and filter laptops across brands, specs, and price, backed by classic IR components like inverted index, ranking, spell‑checking, autocomplete, and query‑frequency tracking.
 
-**Key Features:**
-- Laptop search with brand/spec/price filters and pagination.
-- Spell correction, autocomplete, and word‑frequency analytics.
-- Contact‑page web crawler that extracts phone, email, and URL patterns.
-- Simple Java HTTP API (no Spring) + React SPA frontend.
+## 🚀 Key Features
+
+*   **🔍 Advanced Search & Filtering**: Powered by custom **Inverted Index** and **PageRank** algorithms to rank laptops by relevance, featuring granular filters (Brand, RAM, Price) and pagination.
+*   **✨ Smart Spell Checking**: A **Trie-based** spell checker that automatically corrects typos (e.g., "dell" instead of "del") to ensure accurate results even with misspelled queries.
+*   **⌨️ Real-Time Autocomplete**: Instant word completion suggestions using optimized **Trie** data structures for a seamless search experience.
+*   **📊 Search Analytics**: Tracks real-time search trends and word frequency using **AVL Trees** to display the most popular keywords and user insights.
+*   **🕷️ Intelligent Web Crawler**: Scrapes manufacturer support pages to extract contact details (Emails, Phones, URLs) using **Jsoup** and **Regex** pattern matching.
+*   **⚔️ Laptop Comparison Tool**: Side-by-side specification comparison for up to 3 laptops to help users make informed decisions.
+*   **⚡ Lightweight Architecture**: A high-performance system built with a raw **Java HTTP API** (no Spring overhead) and a modern **React SPA** frontend.
+.
 
 ### 🌐 Quick Links
 
 - **Live Demo:** [Click Here](https://recommendo-bot.vercel.app/)
 
-- **Dataset:** `all_laptops_data.csv` in repo root.
+- **Dataset:** `all_laptops_data.csv` in data folder.
 
 ---
 
@@ -32,13 +37,14 @@ RecommendoBot lets users search and filter laptops across brands, specs, and pri
 ### High‑Level Flow
 
 ```text
-React Frontend (Vercel) ──▶ Java WebInterface API (Railway) ──▶ Algorithms / Data
-                                   │
-                                   ├── Inverted Index + Ranking
-                                   ├── Spell Checking (Trie)
-                                   ├── Word Completion (Trie)
-                                   ├── Search Frequency (AVL + file)
-                                   └── Crawler (Jsoup + regex)
+React Frontend (Vercel) ──▶ Java WebInterface API (Railway) 
+                                   
+              ──▶ Algorithms / Data
+                ├── Inverted Index + Ranking
+                ├── Spell Checking (Trie)
+                ├── Word Completion (Trie)
+                ├── Search Frequency (AVL + file)
+                └── Crawler (Jsoup + regex)
 ```
 
 **Components:**
@@ -156,5 +162,4 @@ Response: JSON array of laptops.
 - If frontend fails in production:
   - Check Network tab for calls to the Railway URL.  
   - Confirm `REACT_APP_API_BASE_URL` is set correctly in Vercel.
-
 ---
