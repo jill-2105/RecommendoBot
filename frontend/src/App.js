@@ -10,6 +10,7 @@ import CompareBar from "./components/CompareBar"
 import CompareModal from "./components/CompareModal"
 import Pagination from "./components/Pagination"
 import { searchLaptops, getSearchFrequency, getWordFrequency } from "./api/laptopService"
+
 import ContactUs from "./components/ContactUs"
 import CrawlerPage from "./components/CrawlerPage"
 
@@ -48,19 +49,18 @@ function App() {
   const [showContactModal, setShowContactModal] = useState(false)
   const [showCrawlerModal, setShowCrawlerModal] = useState(false)
 
-  // Prevent body scroll when contact modal is open
   useEffect(() => {
     if (showContactModal) {
-      document.body.classList.add("modal-open")
+      document.body.classList.add('modal-open');
     } else {
-      document.body.classList.remove("modal-open")
+      document.body.classList.remove('modal-open');
     }
     return () => {
-      document.body.classList.remove("modal-open")
-    }
-  }, [showContactModal])
+      document.body.classList.remove('modal-open');
+    };
+  }, [showContactModal]);
 
-  // Re‑run search when filters or sort change
+  // Trigger search only when filters or sortBy change (not searchQuery)
   useEffect(() => {
     const hasActiveFilters = Object.values(filters).some((f) =>
       Array.isArray(f) ? f.length > 0 : f !== filters.priceRange
@@ -70,51 +70,33 @@ function App() {
       setCurrentPage(1)
       handleSearch(1)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sortBy])
+  }, [filters, sortBy]) // removed searchQuery here
 
   const handleSearch = async (page = 1) => {
     setLoading(true)
     setHasSearched(true)
 
     try {
-      // Call backend via laptopService
       const response = await searchLaptops(searchQuery, filters, sortBy, page, 12)
-      // Expecting response shape:
-      // { laptops: [...], pagination: {...} }
 
-      const laptopsWithIds = (response.laptops || []).map((laptop, index) => ({
+      const laptopsWithIds = response.laptops.map((laptop, index) => ({
         ...laptop,
-        id: laptop.id ?? index, // keep backend id if present
+        id: index,
       }))
 
       setLaptops(laptopsWithIds)
       setFilteredLaptops(laptopsWithIds)
-      setPagination(
-        response.pagination || {
-          currentPage: page,
-          totalPages: 1,
-          totalItems: laptopsWithIds.length,
-          itemsPerPage: 12,
-          hasNextPage: false,
-          hasPrevPage: false,
-        }
-      )
+      setPagination(response.pagination)
       setCurrentPage(page)
 
       if (page === 1) {
-        try {
-          const searchFreq = await getSearchFrequency()
-          setSearchFrequency(searchFreq || {})
-        } catch (err) {
-          console.warn("Could not fetch search frequency:", err)
-          setSearchFrequency({})
-        }
+        const searchFreq = await getSearchFrequency()
+        setSearchFrequency(searchFreq)
 
         if (searchQuery.trim()) {
           try {
             const wordFreqRaw = await getWordFrequency(searchQuery.trim())
-            setWordFrequency(wordFreqRaw || {})
+            setWordFrequency(wordFreqRaw)
           } catch (err) {
             console.warn("Could not fetch word frequency:", err)
             setWordFrequency({})
@@ -175,16 +157,12 @@ function App() {
     <div className="app">
       <div className="header-row">
         <div className="group-title">
-          <h3
-            className="group-link"
-            onClick={() => setShowContactModal(true)}
-            style={{ cursor: "pointer" }}
-          >
-            RecommendoBot
+          <h3 className="group-link" onClick={() => setShowContactModal(true)} style={{cursor: 'pointer'}}>
+            Group-4 AlgoAllies
           </h3>
         </div>
         <div className="main-title">
-          <h1>Laptop search ends here</h1>
+          <h1>Laptop Recommendation System</h1>
         </div>
       </div>
 
@@ -193,7 +171,7 @@ function App() {
           <SearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            onSearch={() => handleSearch(1)}
+            onSearch={() => handleSearch(1)} // Only triggers on Enter now
           />
 
           <FilterBar
@@ -242,11 +220,7 @@ function App() {
         {!hasSearched ? (
           <div className="welcome-section">
             <div className="welcome-content">
-              <img
-                src="/placeholder.svg?height=200&width=300"
-                alt="Welcome"
-                className="welcome-image"
-              />
+              <img src="/placeholder.svg?height=200&width=300" alt="Welcome" className="welcome-image" />
               <h2>Let's get you the best laptop you can get!</h2>
               <p>Use the search bar and filters above to find your perfect laptop</p>
             </div>
@@ -263,21 +237,16 @@ function App() {
           />
         )}
 
-        {hasSearched &&
-          !loading &&
-          filteredLaptops.length > 0 &&
-          pagination.totalPages > 1 && (
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              onPageChange={handlePageChange}
-            />
-          )}
+        {hasSearched && !loading && filteredLaptops.length > 0 && pagination.totalPages > 1 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </main>
 
-      {selectedLaptop && (
-        <ProductModal laptop={selectedLaptop} onClose={() => setSelectedLaptop(null)} />
-      )}
+      {selectedLaptop && <ProductModal laptop={selectedLaptop} onClose={() => setSelectedLaptop(null)} />}
 
       {compareList.length >= 2 && (
         <CompareBar
@@ -287,35 +256,25 @@ function App() {
         />
       )}
 
+      {/* For regex Validation
+      <ContactUs />
+      <CrawlerPage /> */}
+
       {/* Action Buttons */}
       <div className="action-buttons">
-        <button
-          className="action-btn contact-btn"
-          onClick={() => setShowContactModal(true)}
-        >
+        <button className="action-btn contact-btn" onClick={() => setShowContactModal(true)}>
           Contact Us
         </button>
-        <button
-          className="action-btn crawler-btn"
-          onClick={() => setShowCrawlerModal(true)}
-        >
+        <button className="action-btn crawler-btn" onClick={() => setShowCrawlerModal(true)}>
           Web Crawler
         </button>
       </div>
 
       {/* Contact Us Modal */}
       {showContactModal && (
-        <div
-          className="modal-backdrop"
-          onClick={(e) =>
-            e.target === e.currentTarget && setShowContactModal(false)
-          }
-        >
+        <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && setShowContactModal(false)}>
           <div className="modal-content contact-modal">
-            <button
-              className="modal-close"
-              onClick={() => setShowContactModal(false)}
-            >
+            <button className="modal-close" onClick={() => setShowContactModal(false)}>
               ×
             </button>
             <ContactUs />
@@ -325,17 +284,9 @@ function App() {
 
       {/* Web Crawler Modal */}
       {showCrawlerModal && (
-        <div
-          className="modal-backdrop"
-          onClick={(e) =>
-            e.target === e.currentTarget && setShowCrawlerModal(false)
-          }
-        >
+        <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && setShowCrawlerModal(false)}>
           <div className="modal-content crawler-modal">
-            <button
-              className="modal-close"
-              onClick={() => setShowCrawlerModal(false)}
-            >
+            <button className="modal-close" onClick={() => setShowCrawlerModal(false)}>
               ×
             </button>
             <CrawlerPage />
@@ -343,12 +294,9 @@ function App() {
         </div>
       )}
 
-      {showCompareModal && (
-        <CompareModal
-          laptops={compareList}
-          onClose={() => setShowCompareModal(false)}
-        />
-      )}
+
+
+      {showCompareModal && <CompareModal laptops={compareList} onClose={() => setShowCompareModal(false)} />}
     </div>
   )
 }
