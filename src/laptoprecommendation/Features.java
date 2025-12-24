@@ -4,8 +4,10 @@ import SearchFrequency.SearchFreq;
 import spellcheckingusingtrie.SpellCheckingMainClass;
 import Wordcompletion.wordcompletionTries;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+import java.net.URI;
 
 import Crawler.HTMLtoTextConverter;
 import Crawler.RegexExtractor;
@@ -18,10 +20,42 @@ import InvertedIndex.InvertedIndexCSV;
 
 public class Features {
 
-    private static final String DATA_FILE = "all_laptops_data.csv";
+    // Initialize with default, but static block will update it to absolute path
+    private static String DATA_FILE = "all_laptops_data.csv";
     private static final SearchFreq sf = new SearchFreq();
 
+    // -------------------------------------------------------------------------
+    // STATIC BLOCK: Runs once when the app starts to extract the CSV from JAR
+    // -------------------------------------------------------------------------
+    static {
+        try {
+            System.out.println("Attempting to extract CSV from JAR...");
+            // Get the file stream from inside the JAR
+            InputStream is = Features.class.getClassLoader().getResourceAsStream("all_laptops_data.csv");
+            
+            if (is != null) {
+                // Create a temporary file on the real server disk
+                File tempFile = File.createTempFile("laptops_data_extracted", ".csv");
+                tempFile.deleteOnExit(); // Auto-delete when app stops
+
+                // Copy data from JAR stream to the temp file
+                Files.copy(is, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                
+                // Update the DATA_FILE path to point to the real temp file
+                DATA_FILE = tempFile.getAbsolutePath();
+                System.out.println("SUCCESS: Extracted CSV to " + DATA_FILE);
+            } else {
+                System.err.println("CRITICAL ERROR: Could not find 'all_laptops_data.csv' in JAR resources!");
+            }
+        } catch (IOException e) {
+            System.err.println("CRITICAL ERROR: Failed to extract CSV file.");
+            e.printStackTrace();
+        }
+    }
+    // -------------------------------------------------------------------------
+
     public static void main(String[] args) {
+        // Main method for testing crawler logic locally
         Map<String, String> result = crawlAndExtract("https://www.hp.com/ca-en/shop/offer.aspx?p=contact-hp-store");
 
         System.out.println("----- Final Extracted Data -----");
@@ -37,11 +71,13 @@ public class Features {
     }
 
     public static List<String> WordCompletion(String prefix) {
+        // Uses the updated DATA_FILE path (temp file)
         wordcompletionTries wordCompletionTries = new wordcompletionTries(DATA_FILE);
         return wordCompletionTries.wordCompletion(prefix);
     }
 
     public static List<String> SpellCheck(String word) {
+        // Uses the updated DATA_FILE path (temp file)
         SpellCheckingMainClass spc = new SpellCheckingMainClass(DATA_FILE);
         return spc.SpellCheckingUsingTrie(word);
     }
@@ -56,8 +92,7 @@ public class Features {
             if (rowsToRank.isEmpty()) {
                 return Collections.emptyList();
             }
-
-            return PageRankerMainClass.pageRanking(word, rowsToRank);
+            return PageRankerMainClass.pageRanking(word, rowsToRank, DATA_FILE);
         } catch (IOException e) {
             System.out.println("Error in SearchProduct: " + e.getMessage());
             return Collections.emptyList();
@@ -98,7 +133,7 @@ public class Features {
 
     private static String getDomainName(String url) {
         try {
-            return new java.net.URI(url).getHost().replaceFirst("^www\\.", "");
+            return new URI(url).getHost().replaceFirst("^www\\.", "");
         } catch (Exception e) {
             throw new RuntimeException("Invalid URL: " + url);
         }

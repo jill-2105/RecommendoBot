@@ -1,5 +1,7 @@
 package InvertedIndex;
+
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 public class InvertedIndexCSV {
@@ -25,6 +27,7 @@ public class InvertedIndexCSV {
 
     // Build the inverted index from the CSV file
     public static void buildIndex(String csvPath) throws IOException {
+        // Since csvPath comes from Features.java (as a temp file), FileReader works fine!
         BufferedReader br = new BufferedReader(new FileReader(csvPath));
         String line;
         int row = 1; // Starting from 1 for human-friendly indexing
@@ -54,15 +57,30 @@ public class InvertedIndexCSV {
         return current.isEndOfWord ? current.rows : Collections.emptySet();
     }
 
+    // Helper to extract file for main() testing
+    private static String getFilePathForMain(String filename) throws IOException {
+        InputStream is = InvertedIndexCSV.class.getClassLoader().getResourceAsStream(filename);
+        if (is != null) {
+            File tempFile = File.createTempFile("temp_index_data", ".csv");
+            tempFile.deleteOnExit();
+            Files.copy(is, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return tempFile.getAbsolutePath();
+        }
+        return filename; // Fallback to local if not in JAR
+    }
+
     // Main method
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        String[] fileName = { "all_laptops_data.csv" };
         try {
+            // Updated to handle JAR execution
+            String filePath = getFilePathForMain("all_laptops_data.csv");
+            String[] fileName = { filePath };
+
             System.out.print("Enter a word to search: ");
             String query = scanner.nextLine();
             for(String file : fileName) {
-                //Reseting the TrieNode for next file
+                // Resetting the TrieNode for next file
                 root = new TrieNode();
                 System.out.println("Building index from " + file +" ...");
                 buildIndex(file);
@@ -87,11 +105,11 @@ public class InvertedIndexCSV {
     public static Set<Integer> InvertedIndexing(String query, String fileName) {
         try {
             root = new TrieNode();
+            // fileName here is the TEMP FILE PATH passed from Features.java, so it works perfectly.
             System.out.println("Building index from " + fileName + " ...");
             buildIndex(fileName);
 
-            // Split query into individual words (e.g., "Apple Macbook" → ["Apple",
-            // "Macbook"])
+            // Split query into individual words (e.g., "Apple Macbook" -> ["Apple", "Macbook"])
             String[] words = query.split("[^a-zA-Z0-9]+");
 
             Set<Integer> result = null;
